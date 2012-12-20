@@ -72,6 +72,8 @@ directory node['php']['ext_conf_dir'] do
 end
 
 template "#{node['php']['conf_dir']}/php.ini" do
+  extension_dir = `php-config --extension-dir 2>/dev/null`.strip
+  node.set['php']['ext_dir'] = extension_dir
   source "php.ini.erb"
   owner "root"
   group "root"
