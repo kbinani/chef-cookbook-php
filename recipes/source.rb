@@ -40,17 +40,20 @@ end
 
 version = node['php']['version']
 
-remote_file "#{Chef::Config[:file_cache_path]}/php-#{version}.tar.gz" do
-  source "#{node['php']['url']}/php-#{version}.tar.gz"
-  checksum node['php']['checksum']
-  mode "0644"
+ruby_block "get source archive and unpack" do
+  block do
+    remote_path = "#{node['php']['url']}/php-#{version}.tar.gz"
+    local_path = "#{Chef::Config[:file_cache_path]}/php-#{version}.tar.gz"
+    raise Exception, "wget failed. url: #{remote_path}" unless `wget #{remote_path} -O #{local_path} >/dev/null 2>&1; echo $?`.strip.to_i === 0
+    raise Exception, "unpack failed. path: #{local_path}" unless `cd $(dirname #{local_path}) >/dev/null 2>&1 && tar zxf php-#{version}.tar.gz >/dev/null 2>&1; echo $?`.strip.to_i === 0
+  end
+  retries 5
   not_if "which php"
 end
 
 bash "build php" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOF
-  tar -zxvf php-#{version}.tar.gz
   (cd php-#{version} && ./configure #{configure_options})
   (cd php-#{version} && make && make install)
   EOF
