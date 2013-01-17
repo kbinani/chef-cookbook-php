@@ -43,8 +43,10 @@ version = node['php']['version']
 ruby_block "get source archive and unpack" do
   block do
     remote_path = "#{node['php']['url']}/php-#{version}.tar.gz"
-    local_path = "#{Chef::Config[:file_cache_path]}/php-#{version}.tar.gz"
+    local_build_directory = "#{Chef::Config[:file_cache_path]}/php-#{version}"
+    local_path = "#{local_build_directory}.tar.gz"
     raise Exception, "wget failed. url: #{remote_path}" unless `wget #{remote_path} -O #{local_path} >/dev/null 2>&1; echo $?`.strip.to_i === 0
+    `rm -rf #{local_build_directory}`
     raise Exception, "unpack failed. path: #{local_path}" unless `cd $(dirname #{local_path}) >/dev/null 2>&1 && tar zxf php-#{version}.tar.gz >/dev/null 2>&1; echo $?`.strip.to_i === 0
   end
   retries 5
